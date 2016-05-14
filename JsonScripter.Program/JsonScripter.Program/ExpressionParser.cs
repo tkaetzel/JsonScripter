@@ -13,12 +13,20 @@ namespace JsonScripter.Program
       var partName = Expression.Constant(fieldName, Types.String);
       var indexer = Types.JObject.GetProperty("Item", Types.JToken, new[] { Types.String });
       var rootProperty = Expression.Property(rootParameter, indexer, partName);
-      var newValueLambda = DynamicExpression.ParseLambda(new[] { rootParameter }, Types.Object, expression);
-      var newValueLambdaInvokation = Expression.Invoke(newValueLambda, rootParameter);
-      var castNewValue = Expression.Call(Types.JToken, "FromObject", null, newValueLambdaInvokation);
-      var assign = Expression.Assign(rootProperty, castNewValue);
-      var lambda = Expression.Lambda<Action<JObject>>(assign, rootParameter);
-      return lambda.Compile();
+      try
+      {
+        var newValueLambda = DynamicExpression.ParseLambda(new[] { rootParameter }, Types.Object, expression);
+        var newValueLambdaInvokation = Expression.Invoke(newValueLambda, rootParameter);
+        var castNewValue = Expression.Call(Types.JToken, "FromObject", null, newValueLambdaInvokation);
+        var assign = Expression.Assign(rootProperty, castNewValue);
+        var lambda = Expression.Lambda<Action<JObject>>(assign, rootParameter);
+        return lambda.Compile();
+      }
+      catch(System.Linq.Dynamic.ParseException pex)
+      {
+        Console.WriteLine(pex.Message);
+        return null;
+      }
     }
   }
 }

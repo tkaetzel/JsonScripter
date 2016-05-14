@@ -20,9 +20,7 @@ namespace JsonScripter.Program
 
     void Run()
     {
-      Console.WriteLine("Enter JSON string:");
-      var json = Console.ReadLine();
-      var root = JObject.Parse(json);
+      var root = GetJson();
       Console.Clear();
       Console.WriteLine(root.ToString(Formatting.Indented));
       Console.WriteLine();
@@ -39,15 +37,36 @@ namespace JsonScripter.Program
       Console.Read();
     }
 
+    JObject GetJson()
+    {
+      while (true)
+      {
+        Console.WriteLine("Enter JSON string:");
+        try
+        {
+          return JObject.Parse(Console.ReadLine());
+        }
+        catch (JsonReaderException jex)
+        {
+          Console.WriteLine(jex.Message);
+        }
+      }
+    }
+
     void GetNextAction(string expression, out bool done)
     {
-
       if (string.IsNullOrWhiteSpace(expression))
       {
         done = true;
         return;
       }
       var parts = expression.Split(new[] { ':' }, 2);
+      if (parts.Length != 2)
+      {
+        Console.WriteLine("Invalid action - please try again");
+        done = false;
+        return;
+      }
       var field = parts[0];
       var action = parts[1];
       if (action.Equals("remove", StringComparison.OrdinalIgnoreCase))
@@ -57,7 +76,10 @@ namespace JsonScripter.Program
         return;
       }
       var updateAction = ExpressionParser.Parse(field, action);
-      _actions.Add(updateAction);
+      if (updateAction != null)
+      {
+        _actions.Add(updateAction);
+      }
       done = false;
       return;
     }
